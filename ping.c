@@ -43,7 +43,8 @@ int main(int argc, char **argv) {
   }
 
   // UDP ping implemenation goes here
-  int status;
+  int status, sockfd;
+  double starttime, endtime;
   struct addrinfo hints;
   struct addrinfo* res;
   char arr[arraysize];
@@ -57,6 +58,19 @@ int main(int argc, char **argv) {
   if((status = getaddrinfo(NULL, PORTNO, &hints, &res)) != 0){
     printf("error: getaddrinfo\n");
     return 1;
+  }
+
+  sockfd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+
+  for(int i = 0; i < arraysize; i++){
+    starttime = get_wctime();
+    sendto(sockfd, &(arr[i]), sizeof(char), NULL, res->ai_addr, res->ai_addrlen);
+    sleep(1);
+    recvfrom(sockfd, &(arr[i]), sizeof(char), NULL, res->ai_addr, res->ai_addrlen);
+    endtime = get_wctime();
+    if(strcmp("201", arr[i]) != 0){
+      printf("error: did not receive what was expected from pong.\n");
+    }
   }
 
 
