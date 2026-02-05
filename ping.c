@@ -44,7 +44,8 @@ int main(int argc, char **argv) {
 
   // UDP ping implemenation goes here
   int status, sockfd;
-  double starttime, endtime;
+  double starttime, endtime, timeelapsed, avg_time;
+  double total_time = 0;
   struct addrinfo hints;
   struct addrinfo* res;
   char arr[arraysize];
@@ -64,14 +65,24 @@ int main(int argc, char **argv) {
 
   for(int i = 0; i < arraysize; i++){
     starttime = get_wctime();
-    sendto(sockfd, &(arr[i]), sizeof(char), NULL, res->ai_addr, res->ai_addrlen);
+    sendto(sockfd, &(arr[i]), sizeof(char), 0, res->ai_addr, res->ai_addrlen);
     sleep(1);
-    recvfrom(sockfd, &(arr[i]), sizeof(char), NULL, res->ai_addr, res->ai_addrlen);
+    recvfrom(sockfd, &(arr[i]), sizeof(char), 0, res->ai_addr, &res->ai_addrlen);
     endtime = get_wctime();
-    if(strcmp("201", arr[i]) != 0){
+    if(strcmp("201", &arr[i]) != 0){
       printf("error: did not receive what was expected from pong.\n");
     }
+    timeelapsed = endtime - starttime;
+    total_time += timeelapsed;
   }
+
+  avg_time = total_time/arraysize;
+
+  printf("total time: %f; average time: %f\n", total_time, avg_time);
+
+
+
+  
 
 
 
