@@ -1,6 +1,6 @@
 /*
  * ping.c - UDP ping/pong client code
- *          author: <your name>
+ *          author: Juan Perdomo
  */
 #include <netdb.h>
 #include <stdio.h>
@@ -43,6 +43,24 @@ int main(int argc, char **argv) {
   }
 
   // UDP ping implemenation goes here
+  int status;
+  struct addrinfo hints;
+  struct addrinfo* res;
+  char arr[arraysize];
+
+  memset(arr, 200, arraysize);
+  
+  memset(&hints, 0, sizeof(hints));
+  hints.ai_family = AF_INET;
+  hints.ai_socktype = SOCK_DGRAM;
+  
+  if((status = getaddrinfo(NULL, PORTNO, &hints, &res)) != 0){
+    printf("error: getaddrinfo\n");
+    return 1;
+  }
+
+
+
   printf("nping: %d arraysize: %d errors: %d ponghost: %s pongport: %s\n",
       nping, arraysize, errors, ponghost, pongport);
 
