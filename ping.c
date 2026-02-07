@@ -17,7 +17,7 @@
 
 
 int main(int argc, char **argv) {
-  int ch, errors = 0;
+  int ch;
   int nping = 1;                        // default packet count
   char *ponghost = strdup("localhost"); // default host
   char *pongport = strdup(PORTNO);      // default port
@@ -38,56 +38,52 @@ int main(int argc, char **argv) {
       arraysize = atoi(optarg);
       break;
     default:
-      fprintf(stderr, "usage: ping [-h host] [-n #pings] [-p port] [-s size]\n");
+      fprintf(stderr, "usage: ping [-h host] [-n #pings] [-p port]\n");
     }
   }
-
   // UDP ping implemenation goes here
   int status, sockfd;
   double starttime, endtime, timeelapsed, avg_time;
   double total_time = 0;
   struct addrinfo hints;
   struct addrinfo* res;
-  char arr[arraysize];
+  unsigned char arr[arraysize];
 
-  memset(arr, 200, arraysize);
+  memset(arr, 200, nping);
   
   memset(&hints, 0, sizeof(hints));
   hints.ai_family = AF_INET;
   hints.ai_socktype = SOCK_DGRAM;
   
-  if((status = getaddrinfo(NULL, PORTNO, &hints, &res)) != 0){
+  if((status = getaddrinfo(ponghost, pongport, &hints, &res)) != 0){
     printf("error: getaddrinfo\n");
     return 1;
   }
 
   sockfd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-
-  for(int i = 0; i < arraysize; i++){
+  for(int i = 0; i < nping; i++){
     starttime = get_wctime();
-    sendto(sockfd, &(arr[i]), sizeof(char), 0, res->ai_addr, res->ai_addrlen);
-    sleep(1);
-    recvfrom(sockfd, &(arr[i]), sizeof(char), 0, res->ai_addr, &res->ai_addrlen);
+    sendto(sockfd, &(arr[i]), sizeof(unsigned char), 0, res->ai_addr, res->ai_addrlen);
+    while(recvfrom(sockfd, &(arr[i]), sizeof(unsigned char), 0, res->ai_addr, &res->ai_addrlen)
+        == -1){
+      sleep(1);
+      printf("waiting to receive.\n");
+    }
     endtime = get_wctime();
-    if(strcmp("201", &arr[i]) != 0){
-      printf("error: did not receive what was expected from pong.\n");
+    if(201 != (int)arr[i]){
+      printf("error: did not receive what was expected from pong, received: %c\n", arr[i]);
+      return -1;
     }
     timeelapsed = endtime - starttime;
+    printf("ping[%d] : round-trip time: %f ms.\n", i, timeelapsed);
     total_time += timeelapsed;
   }
+  printf("I made it out the loop!\n");
 
-  avg_time = total_time/arraysize;
+  avg_time = total_time/nping;
 
   printf("total time: %f; average time: %f\n", total_time, avg_time);
-
-
-
-  
-
-
-
-  printf("nping: %d arraysize: %d errors: %d ponghost: %s pongport: %s\n",
-      nping, arraysize, errors, ponghost, pongport);
-
+  close(sockfd);
+  freeaddrinfo(res);
   return 0;
 }
